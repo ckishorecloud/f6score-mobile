@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,
+  Image, Keyboard, ScrollView, StyleSheet, Text,
+  TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -135,7 +136,7 @@ export default function RoundEntry() {
         <Text style={styles.title}>Record Round</Text>
         <Text style={styles.subtitle}>Round {game.round}  ·  Target {game.target}</Text>
 
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 24 }}>
           {sortedActive.map(name => (
             <View key={name} style={styles.playerRow}>
               <View style={styles.playerLeft}>
@@ -158,7 +159,18 @@ export default function RoundEntry() {
                 <TouchableOpacity style={styles.stepBtn} onPress={() => adjust(name, -1)}>
                   <Text style={styles.stepMinus}>−</Text>
                 </TouchableOpacity>
-                <Text style={styles.stepValue}>{pts[name] ?? 0}</Text>
+                <TextInput
+                  style={styles.stepValue}
+                  value={String(pts[name] ?? 0)}
+                  onChangeText={v => {
+                    const n = parseInt(v.replace(/[^0-9]/g, ''));
+                    setPts(prev => ({ ...prev, [name]: isNaN(n) ? 0 : Math.max(0, n) }));
+                  }}
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                />
                 <TouchableOpacity style={[styles.stepBtn, styles.stepBtnAdd]} onPress={() => adjust(name, 1)}>
                   <Text style={styles.stepPlus}>+</Text>
                 </TouchableOpacity>
@@ -213,7 +225,13 @@ const styles = StyleSheet.create({
   stepBtnAdd: { backgroundColor: 'rgba(0,204,204,0.18)', borderColor: 'rgba(0,204,204,0.38)' },
   stepMinus: { fontFamily: 'Montserrat_700Bold', fontSize: 20, color: '#e0f4f4', lineHeight: 24 },
   stepPlus:  { fontFamily: 'Montserrat_700Bold', fontSize: 20, color: '#00cccc', lineHeight: 24 },
-  stepValue: { fontFamily: 'Montserrat_800ExtraBold', fontSize: 24, color: '#e0f4f4', minWidth: 36, textAlign: 'center' },
+  stepValue: {
+    fontFamily: 'Montserrat_800ExtraBold', fontSize: 24, color: '#e0f4f4',
+    minWidth: 48, textAlign: 'center',
+    backgroundColor: 'rgba(0,204,204,0.08)',
+    borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,204,204,0.22)',
+    paddingVertical: 2, paddingHorizontal: 4,
+  },
 
   footer: { paddingHorizontal: Spacing.pagePadding, paddingBottom: 16 },
   submitBtn: { borderRadius: Radius.full, overflow: 'hidden' },

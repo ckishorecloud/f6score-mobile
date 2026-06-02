@@ -37,7 +37,18 @@ export default function PodiumScreen() {
     );
   }
 
-  const { podium, scores } = game;
+  const { scores } = game;
+
+  // Build a complete podium — safety fallback: any team member not already in
+  // podium (e.g. due to score-edit path skipping elimOrder) is appended at the end
+  // sorted by score descending (highest score = worst rank).
+  const podiumBase = game.podium ?? [];
+  const podiumSet  = new Set(podiumBase);
+  const missing    = (game.teams ?? [])
+    .filter(t => !podiumSet.has(t))
+    .sort((a, b) => scores[b] - scores[a]);
+  const podium = [...podiumBase, ...missing];
+
   const medals = ['🥇', '🥈', '🥉'];
   const podiumColors = [Colors.gold, Colors.silver, Colors.bronze];
   const podiumBgs = [
@@ -47,7 +58,9 @@ export default function PodiumScreen() {
   ];
 
   // Visual order: 2nd (left), 1st (centre / raised), 3rd (right)
-  const visualOrder = [1, 0, 2].filter(i => i < podium.length);
+  // Always show up to 3 slots; pad with null for missing positions
+  const top3Indices = [1, 0, 2];
+  const visualOrder = top3Indices.filter(i => i < podium.length);
 
   return (
     <View style={styles.container}>

@@ -101,6 +101,19 @@ export default function GameTab() {
     // Recompute eliminations
     const newElim = teams.filter(t => newScores[t] >= target);
     const newRej  = rejoined.filter(r => !newElim.includes(r));
+    // Keep existing elimOrder for players still eliminated; append newly eliminated at end
+    const prevElimOrder = game!.elimOrder;
+    const stillInOrder  = prevElimOrder.filter(t => newElim.includes(t));
+    const newlyElim     = newElim.filter(t => !prevElimOrder.includes(t));
+    // Sort newly-eliminated by score descending (highest score = first out this edit)
+    newlyElim.sort((a, b) => newScores[b] - newScores[a]);
+    const newElimOrder = [...stillInOrder, ...newlyElim];
+    // Recompute podium if game is over
+    const remaining = teams.filter(t => !newElim.includes(t));
+    const isStillOver = game!.gameOver && remaining.length <= 1;
+    const newPodium = isStillOver
+      ? [...remaining].sort((a, b) => newScores[a] - newScores[b]).concat([...newElimOrder].reverse())
+      : game!.podium;
     const updated: GameState = {
       teams,
       target,
@@ -109,8 +122,8 @@ export default function GameTab() {
       eliminated:   newElim,
       rejoined:     newRej,
       hasRejoined:  game!.hasRejoined,
-      elimOrder:    game!.elimOrder,
-      podium:       game!.podium,
+      elimOrder:    newElimOrder,
+      podium:       newPodium,
       log:          game!.log,
       roundHistory: [...roundHistory, snapshot],
       gameOver:     game!.gameOver,
